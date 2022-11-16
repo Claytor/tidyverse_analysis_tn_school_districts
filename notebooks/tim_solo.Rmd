@@ -22,23 +22,27 @@ Create an RMarkdown file to answer the following questions.
     rows and columns does it contain?
     -   It contains 27 rows and 146 Columns
 
-```{r}
+```{r load districts}
  districts
 ```
 
-2.  Notice that the first row corresponds to the whole State of
+
+#2.  Notice that the first row corresponds to the whole State of
     Tennessee. Remove this row and save the result back to `districts`.
+  
 ```{r remove first row.  DON'T PUSH AGAIN!!!}
-districts <- districts[-1,]
+  districts <- districts[-1,]
+  districts
 ```
 3.  How many districts have a proficiency rate of at least 80% for both
     alg_1 and eng_1? 
+
 There were 13 districts where the proficiency for both Algebra 1 and English 1 were at-least 80%
-    
+
 ```{r Freshman EOC 80% For Algebra 1 and English 1}
-freshEOC80 <- districts %>% 
-  filter(alg_1 >=80 & eng_1>=80)
-freshEOC80
+  freshEOC80 <- districts %>% 
+    filter(alg_1 >=80 & eng_1>=80)
+  freshEOC80
 ```
 
 4.  How many districts have a proficiency rate less than 50% for either
@@ -55,34 +59,50 @@ freshEOC50
 
 5.  Which district has the lowest graduation rate?
 Achievement School District had the lowest graduation rate
-```{r}
+```{r Lowest Graduation Rate}
 LowestGraduation <- districts %>% 
   filter(grad == min(grad, na.rm=TRUE))
-LowestCompletion
+LowestGraduation
 ```
-
 
 6.  Within the Mid Cumberland region, which district has the highest ACT
     composite?
+
 Williamson County had the Highest ACT Composite from the Mid Cumberland Region.
-```{r}
+
+```{r Highest ACT Composite in Midcumberland Region}
 MidCumACT <- districts %>% 
   filter(region == "Mid Cumberland") %>% 
   filter(act_composite == max(act_composite, na.rm=TRUE))
 MidCumACT
 ```
 
-
 7.  Create a histogram showing the distribution of graduation rates.
     What can you say about this distribution?
+```{r}
+districts %>% 
+  ggplot(aes(x=grad)) +
+  geom_histogram()
+```
 
 8.  Create a scatter plot to compare alg_1 proficiency rates to alg_2
     rates. What do you notice? Facet this plot by region. Does anything
     stand out when you facet the plots?
+```{r}
+districts %>% 
+  ggplot(aes(x= alg_1, y=alg_2, color = region)) +
+  geom_point()
+  facit_wrap(~region)
+```
+    
 
 9.  Create a bar chart showing the total enrollment by region. Which
     region has the highest total enrollment? Which has the smallest?
-
+```{r}
+districts %>% 
+  ggplot(aes(x= region, y=enrollment)) +
+  geom_bar()
+```
 10. When creating this bar chart you may have noticed that some
     districts have missing enrollment values. For how many districts is
     this the case?
