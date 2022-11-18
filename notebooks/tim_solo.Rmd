@@ -18,12 +18,12 @@ region in Tennessee
 
 Create an RMarkdown file to answer the following questions.
 
-1.  Read in `districts.csv` into a tibble named `districts`. How many
+#1.  Read in `districts.csv` into a tibble named `districts`. How many
     rows and columns does it contain?
     -   It contains 27 rows and 146 Columns
 
 ```{r load districts}
- districts
+ districts <- read_csv('../data/districts.csv')
 ```
 
 
@@ -34,7 +34,7 @@ Create an RMarkdown file to answer the following questions.
   districts <- districts[-1,]
   districts
 ```
-3.  How many districts have a proficiency rate of at least 80% for both
+#3.  How many districts have a proficiency rate of at least 80% for both
     alg_1 and eng_1? 
 
 There were 13 districts where the proficiency for both Algebra 1 and English 1 were at-least 80%
@@ -45,19 +45,20 @@ There were 13 districts where the proficiency for both Algebra 1 and English 1 w
   freshEOC80
 ```
 
-4.  How many districts have a proficiency rate less than 50% for either
+#4.  How many districts have a proficiency rate less than 50% for either
     alg_1 or eng_1?
     
 There were 8 counties where proficiency rates in either algebra 1 OR english 1 were below 50%
 
 ```{r Districts with freshaman ELA or Math Proficiency below 50%, paged.print=FALSE}
 freshEOC50 <- districts %>% 
-  filter(alg_1 <=50 | eng_1<=50)
+  filter(alg_1 <=50 | eng_1<=50) %>% 
+  transmute(system_name, alg_1, eng_1)
 freshEOC50
 ```
 
 
-5.  Which district has the lowest graduation rate?
+#5.  Which district has the lowest graduation rate?
 Achievement School District had the lowest graduation rate
 ```{r Lowest Graduation Rate}
 LowestGraduation <- districts %>% 
@@ -65,7 +66,7 @@ LowestGraduation <- districts %>%
 LowestGraduation
 ```
 
-6.  Within the Mid Cumberland region, which district has the highest ACT
+#6.  Within the Mid Cumberland region, which district has the highest ACT
     composite?
 
 Williamson County had the Highest ACT Composite from the Mid Cumberland Region.
@@ -73,82 +74,137 @@ Williamson County had the Highest ACT Composite from the Mid Cumberland Region.
 ```{r Highest ACT Composite in Midcumberland Region}
 MidCumACT <- districts %>% 
   filter(region == "Mid Cumberland") %>% 
-  filter(act_composite == max(act_composite, na.rm=TRUE))
+  filter(act_composite == max(act_composite, na.rm=TRUE)) %>% 
+  transmute(system_name, act_composite)
 MidCumACT
 ```
 
-7.  Create a histogram showing the distribution of graduation rates.
+#7.  Create a histogram showing the distribution of graduation rates.
     What can you say about this distribution?
+    
+    # The majority of the school districts seem to have graduation rates 
+    between  
+    
 ```{r}
 districts %>% 
-  ggplot(aes(x=grad)) +
-  geom_histogram()
+  ggplot(aes(x=grad, fill = region)) +
+  geom_histogram(bins = 30, na.rm = TRUE)
 ```
 
-8.  Create a scatter plot to compare alg_1 proficiency rates to alg_2
+#8.  Create a scatter plot to compare alg_1 proficiency rates to alg_2
     rates. What do you notice? Facet this plot by region. Does anything
     stand out when you facet the plots?
+    
+    # for most regions, algebra 1 scores are positively 
+    
 ```{r}
 districts %>% 
   ggplot(aes(x= alg_1, y=alg_2, color = region)) +
-  geom_point()
-  facit_wrap(~region)
+  geom_point(na.rm = TRUE) +
+  facet_wrap(~region)
 ```
     
 
-9.  Create a bar chart showing the total enrollment by region. Which
+#9.  Create a bar chart showing the total enrollment by region. Which
     region has the highest total enrollment? Which has the smallest?
 ```{r}
 districts %>% 
-  ggplot(aes(x= region, y=enrollment)) +
-  geom_bar()
+  ggplot(aes(enrollment, region, fill = region)) +
+  geom_bar(stat='identity', na.rm = TRUE)
+
 ```
-10. When creating this bar chart you may have noticed that some
+#10. When creating this bar chart you may have noticed that some
     districts have missing enrollment values. For how many districts is
     this the case?
+```{r}
+districts %>% 
+  filter(is.na(enrollment)) %>% 
+  transmute(system_name)
+```
 
-11. What is the mean graduation rate across all districts? What might be
+#11. What is the mean graduation rate across all districts? What might be
     wrong with using just the regular mean to assess average graduation
     rates?
+    
+    #  90.1%
+     
+```{r}
+mean(districts$grad, na.rm=TRUE)
+```
 
-12. Redo the previous question but use a weighted average
+#12. Redo the previous question but use a weighted average
     (`weighted.mean`) graduation across all districts, weighing by
     enrollment. How much does this change your answer? Can you explain
     using the data the reason for the big change from using the mean?
+    
+```{r}
+WeightedGrad <- districts %>% 
+  group_by(enrollment) %>% 
+  summarize(avg_grad = weighted.mean(grad, enrollment, na.rm = FALSE))
+mean(WeightedGrad$avg_grad, na.rm = TRUE)
+```
 
-13. Create a boxplot showing graduation rates per region. Does anything
+#13. Create a boxplot showing graduation rates per region. Does anything
     stand out?
+```{r}
+districts %>% 
+  group_by(region) %>% 
+  transmute(region, grad)
+```
+    
+    
 
-14. Find the weighted average of graduation rates by region using
+#14. Find the weighted average of graduation rates by region using
     enrollment as weights. Compare the results you get for the weighted
     average to what you see from the boxplots.
+```{r}
 
-15. For many districts, values for `alg_2` are lower than for `alg_1`.
+```
+
+#15. For many districts, values for `alg_2` are lower than for `alg_1`.
     Create a histogram showing the distribution of differences
     (`alg_1` - `alg_2`). Which school had the largest drop from `alg_1`
     to `alg_2`? For what percentage of schools is it true that `alg_2`
     is larger than `alg_1`? Is there a similar drop off for `eng_2` and
     `eng_3`?
+```{r}
 
-16. You may have noticed that a lot of rows are missing values. Which
+```
+
+#16. You may have noticed that a lot of rows are missing values. Which
     district has the largest number of missing values? What do you
     notice about schools that have a lot of missing values?
+```{r}
 
-17. Find the correlation between graduation rate and all other
+```
+
+#17. Find the correlation between graduation rate and all other
     variables. Create a horizontal bar chart showing these correlations.
     Make sure that your plot is ordered by correlation values. What do
     you notice from these correlations?
+```{r}
 
-18. Create a scatterplot for `grad` vs. `suspended`. Does what you see
+```
+
+#18. Create a scatterplot for `grad` vs. `suspended`. Does what you see
     make sense given your answer from the previous part?
+```{r}
 
-19. Create a linear regression model using `lm` with target variable
+```
+
+#19. Create a linear regression model using `lm` with target variable
     `grad` and predictor variable `suspended`. What R\^2 value does this
     model have? What is the interpretation of this number?
+```{r}
 
-20. Add the regression line to your scatterplot using `geom_smooth` with
+```
+
+#20. Add the regression line to your scatterplot using `geom_smooth` with
     `method='lm'`. How do you feel about the regression line after
     seeing it plotted on the scatterplot?
+```{r}
+
+```
 
 **Continued Exploration and Practice**
 
