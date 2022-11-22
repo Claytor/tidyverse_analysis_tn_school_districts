@@ -184,24 +184,35 @@ districts %>%
 ```
 ```{r}
 districts %>% 
-  transmute(system_name, alg_diff = alg_1 < alg_2 ) %>% 
-  arrange(alg_diff) %>% drop_na(alg_diff)
-```
-```{r}
-districts %>% 
   transmute(system_name, alg_diff = alg_1 - alg_2) %>% 
   arrange(alg_diff) %>% drop_na(alg_diff)
 ``` 
-#16. You may have noticed that a lot of rows are missing values. Which
-district has the largest number of missing values? What do you notice
-about schools that have a lot of missing values?
-
+```{r}
+districts %>% 
+  transmute(system_name, alg_diff = alg_1 < alg_2 ) %>% 
+  arrange(alg_diff) %>% drop_na(alg_diff)
+```
 ```{r}
 districts %>%
   mutate(alg_two_diff = alg_2 < alg_1) %>%
   drop_na(alg_2, alg_1) %>%
   count(alg_two_diff, TRUE / 117)
 ```
+#16. You may have noticed that a lot of rows are missing values. Which
+district has the largest number of missing values? What do you notice about schools that have a lot of missing values?
+```{r}
+districts %>%                                    
+  sapply(function(x) sum(is.na(x)))
+districts
+```
+
+
+```{r}
+districts %>%
+  mutate(total = rowSums(across(where(is.na(x)))))
+```
+
+
 
 #17. Find the correlation between graduation rate and all other
 variables. Create a horizontal bar chart showing these correlations.
@@ -209,7 +220,8 @@ Make sure that your plot is ordered by correlation values. What do you
 notice from these correlations?
 
 ```{r}
-
+ districts %>% 
+  select()
 ```
 
 #18. Create a scatterplot for `grad` vs. `suspended`. Does what you see
