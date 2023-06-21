@@ -2,6 +2,7 @@
 
 In this project, you'll practice working with data using the tidyverse libraries. 
 You'll be working with data on each of 145 school districts and the State of Tennessee. This data contains, for the 2014-2015 school year:
+
 * Proficiency rates on state tests
 * Student demographics
 * Chronic absenteeism

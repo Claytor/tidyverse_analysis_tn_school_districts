@@ -170,9 +170,7 @@ districts %>%
 
 #15. For many districts, values for `alg_2` are lower than for `alg_1`.
 Create a histogram showing the distribution of differences (`alg_1` -
-`alg_2`). Which school district had the largest drop from `alg_1` to `alg_2`? For
-what percentage of school districts is it true that `alg_2` is larger than
-`alg_1`? Is there a similar drop off for `eng_2` and `eng_3`?
+`alg_2`). 
 
 ```{r}
 districts %>%
@@ -182,11 +180,30 @@ districts %>%
   geom_histogram(position = 'identity') + 
   facet_wrap(~region) 
 ```
+Bua's code
+
+```{r}
+districts$diff_alg1_alg2 <- districts$alg_1 - districts$alg_2
+ggplot(districts, aes(x=diff_alg1_alg2,))+
+  geom_histogram(color="black", fill="pink",binwidth=5)
+```
+Which school district had the largest drop from `alg_1` to `alg_2`? 
+
 ```{r}
 districts %>% 
   transmute(system_name, alg_diff = alg_1 - alg_2) %>% 
-  arrange(alg_diff) %>% drop_na(alg_diff)
+  arrange(desc(alg_diff)) %>% drop_na(alg_diff)
 ``` 
+# For what percentage of school districts is it true that `alg_2` is larger than
+`alg_1`? 
+
+```{r}
+distiricts %>% 
+  mutate(alg_dif = alg_1 - alg_2) %>% 
+  summarize(pct_improve = mean(alg_dif))
+```
+
+
 ```{r}
 districts %>% 
   transmute(system_name, alg_diff = alg_1 < alg_2 ) %>% 
@@ -198,37 +215,69 @@ districts %>%
   drop_na(alg_2, alg_1) %>%
   count(alg_two_diff, TRUE / 117)
 ```
+Is there a similar drop off for `eng_2` and `eng_3`?
+```{r}
+districts$diff_eng2_eng3 <- districts$eng_2 - districts$eng_3
+ggplot(districts, aes(x=diff_eng2_eng3,))+
+geom_histogram(color="black", fill="pink",binwidth=5)
+
+districts$diff_eng3_eng2 <- districts$eng_3 - districts$eng_2
+ggplot(districts, aes(x=diff_eng3_eng2,))+
+geom_histogram(color="black", fill="lightblue",binwidth=5)
+
+summary(districts$eng_2)
+summary(districts$eng_3)
+summary(districts$diff_eng2_eng3) 
+```
+
+
 #16. You may have noticed that a lot of rows are missing values. Which
 district has the largest number of missing values? What do you notice about schools that have a lot of missing values?
 ```{r}
-districts %>%                                    
-  sapply(function(x) sum(is.na(x)))
-districts
+districts %>% 
+  mutate(nancount = rowSums(is.na(.))) %>% 
+  filter(nancount >= 5) %>% 
+  transmute(system_name, nancount) %>% 
+  arrange(desc(nancount)) 
 ```
-
-
-```{r}
-districts %>%
-  mutate(total = rowSums(across(where(is.na(x)))))
-```
-
-
-
 #17. Find the correlation between graduation rate and all other
 variables. Create a horizontal bar chart showing these correlations.
 Make sure that your plot is ordered by correlation values. What do you
 notice from these correlations?
 
 ```{r}
- districts %>% 
-  select()
+districts %>% 
+  select(where(is.numeric)) %>% 
+  cor(x=., y=districts$grad, use='complete.obs') %>% 
+  as.data.frame() %>% 
+  rownames_to_column(var = 'variables') %>% 
+ggplot(aes(y=reorder(variables, V1), weight=V1)) +
+geom_bar() 
 ```
+```{r}
+districts %>% 
+  select(where(is.numeric)) %>% 
+  select(-system) %>% 
+  cor(use="pairwise.complete.obs") %>% 
+  as_tibble(rownames="variable") %>% 
+  filter(variable != "grad") %>% 
+  select(variable, grad) %>% 
+  arrange(desc(grad)) 
+```
+```{r}
+data_cor_df <- as.data.frame(as.table(data_cor)) 
+ggplot(data_cor_df, aes(x=Freq, y=Var1, fill=Var1)) + 
+  geom_col(na.rm = TRUE) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+```
+
 
 #18. Create a scatterplot for `grad` vs. `suspended`. Does what you see
 make sense given your answer from the previous part?
 
 ```{r}
-
+ggplot(districts, aes(x=grad, y=suspended, color=region))+
+geom_point(na.rm=T) 
 ```
 
 #19. Create a linear regression model using `lm` with target variable
@@ -236,15 +285,28 @@ make sense given your answer from the previous part?
 model have? What is the interpretation of this number?
 
 ```{r}
-
+grad_suspended_lm <- lm(grad ~ suspended, districts, na.action=na.exclude)
+anova(grad_suspended_lm)
+summary(grad_suspended_lm) 
 ```
+# Does it look much different if NAs are removed.
+
+```{r}
+grad_lm <- districts %>% 
+filter(grad > 25) %>% 
+lm(grad ~ suspended, data = .)
+summary(grad_lm) 
+```
+
 
 #20. Add the regression line to your scatterplot using `geom_smooth`
 with `method='lm'`. How do you feel about the regression line after
 seeing it plotted on the scatterplot?
 
 ```{r}
-
+ggplot(districts, aes(x=suspended, y=grad)) +
+  geom_point(na.rm=T) +
+  geom_smooth(method = 'lm')
 ```
 
 **Continued Exploration and Practice**
